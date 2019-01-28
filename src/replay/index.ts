@@ -19,7 +19,7 @@ import {
   incrementalData,
   ReplayerEvents,
 } from '../types';
-import { mirror } from '../utils';
+import { Mirror } from '../utils';
 import injectStyleRules from './styles/inject-style';
 import './styles/style.css';
 
@@ -39,6 +39,7 @@ export class Replayer {
   public iframe: HTMLIFrameElement;
 
   public timer: Timer;
+  public mirror: Mirror;
 
   private events: eventWithTime[] = [];
   private config: playerConfig;
@@ -73,6 +74,7 @@ export class Replayer {
     this.config = Object.assign({}, defaultConfig, config);
 
     this.timer = new Timer(this.config);
+    this.mirror = new Mirror()
     this.setupDom();
     this.emitter.on('resize', this.handleResize as mitt.Handler);
   }
@@ -273,7 +275,7 @@ export class Replayer {
       );
     }
     this.missingNodeRetryMap = {};
-    mirror.map = rebuild(event.data.node, this.iframe.contentDocument!)[1];
+    this.mirror.map = rebuild(event.data.node, this.iframe.contentDocument!)[1];
     const styleEl = document.createElement('style');
     const { documentElement, head } = this.iframe.contentDocument!;
     documentElement!.insertBefore(styleEl, head);
@@ -329,16 +331,16 @@ export class Replayer {
     switch (d.source) {
       case IncrementalSource.Mutation: {
         d.removes.forEach(mutation => {
-          const target = mirror.getNode(mutation.id);
+          const target = this.mirror.getNode(mutation.id);
           if (!target) {
             return this.warnNodeNotFound(d, mutation.id);
           }
-          const parent = mirror.getNode(mutation.parentId);
+          const parent = this.mirror.getNode(mutation.parentId);
           if (!parent) {
             return this.warnNodeNotFound(d, mutation.parentId);
           }
           // target may be removed with its parents before
-          mirror.removeNodeFromMap(target);
+          this.mirror.removeNodeFromMap(target);
           if (parent) {
             parent.removeChild(target);
           }
@@ -349,20 +351,20 @@ export class Replayer {
           const target = buildNodeWithSN(
             mutation.node,
             this.iframe.contentDocument!,
-            mirror.map,
+            this.mirror.map,
             true,
           ) as Node;
-          const parent = mirror.getNode(mutation.parentId);
+          const parent = this.mirror.getNode(mutation.parentId);
           if (!parent) {
             return this.warnNodeNotFound(d, mutation.parentId);
           }
           let previous: Node | null = null;
           let next: Node | null = null;
           if (mutation.previousId) {
-            previous = mirror.getNode(mutation.previousId) as Node;
+            previous = this.mirror.getNode(mutation.previousId) as Node;
           }
           if (mutation.nextId) {
-            next = mirror.getNode(mutation.nextId) as Node;
+            next = this.mirror.getNode(mutation.nextId) as Node;
           }
 
           if (mutation.previousId === -1 || mutation.nextId === -1) {
@@ -394,14 +396,14 @@ export class Replayer {
         }
 
         d.texts.forEach(mutation => {
-          const target = mirror.getNode(mutation.id);
+          const target = this.mirror.getNode(mutation.id);
           if (!target) {
             return this.warnNodeNotFound(d, mutation.id);
           }
           target.textContent = mutation.value;
         });
         d.attributes.forEach(mutation => {
-          const target = mirror.getNode(mutation.id);
+          const target = this.mirror.getNode(mutation.id);
           if (!target) {
             return this.warnNodeNotFound(d, mutation.id);
           }
@@ -443,7 +445,7 @@ export class Replayer {
           break;
         }
         const event = new Event(MouseInteractions[d.type].toLowerCase());
-        const target = mirror.getNode(d.id);
+        const target = this.mirror.getNode(d.id);
         if (!target) {
           return this.warnNodeNotFound(d, d.id);
         }
@@ -488,7 +490,7 @@ export class Replayer {
         if (d.id === -1) {
           break;
         }
-        const target = mirror.getNode(d.id);
+        const target = this.mirror.getNode(d.id);
         if (!target) {
           return this.warnNodeNotFound(d, d.id);
         }
@@ -527,7 +529,7 @@ export class Replayer {
         if (d.id === -1) {
           break;
         }
-        const target = mirror.getNode(d.id);
+        const target = this.mirror.getNode(d.id);
         if (!target) {
           return this.warnNodeNotFound(d, d.id);
         }
@@ -575,7 +577,7 @@ export class Replayer {
   private moveAndHover(d: incrementalData, x: number, y: number, id: number) {
     this.mouse.style.left = `${x}px`;
     this.mouse.style.top = `${y}px`;
-    const target = mirror.getNode(id);
+    const target = this.mirror.getNode(id);
     if (!target) {
       return this.warnNodeNotFound(d, id);
     }

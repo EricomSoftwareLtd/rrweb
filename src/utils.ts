@@ -1,10 +1,10 @@
 import {
-  Mirror,
   throttleOptions,
   listenerHandler,
   hookResetter,
+  IMirror,
 } from './types';
-import { INode } from 'rrweb-snapshot';
+import { INode, idNodeMap } from 'rrweb-snapshot';
 
 export function on(
   type: string,
@@ -16,32 +16,38 @@ export function on(
   return () => target.removeEventListener(type, fn, options);
 }
 
-export const mirror: Mirror = {
-  map: {},
-  getId(n) {
+export class Mirror implements IMirror {
+  public map: idNodeMap = {}
+
+  public getId(n: INode) {
     // if n is not a serialized INode, use -1 as its id.
     if (!n.__sn) {
       return -1;
     }
     return n.__sn.id;
-  },
-  getNode(id) {
-    return mirror.map[id] || null;
-  },
+  }
+  
+  public getNode(id: number) {
+    return this.map[id] || null;
+  }
+
   // TODO: use a weakmap to get rid of manually memory management
-  removeNodeFromMap(n) {
+  public removeNodeFromMap(n: INode) {
     const id = n.__sn && n.__sn.id;
-    delete mirror.map[id];
+    delete this.map[id];
     if (n.childNodes) {
       n.childNodes.forEach(child =>
-        mirror.removeNodeFromMap((child as Node) as INode),
+        this.removeNodeFromMap((child as Node) as INode),
       );
     }
-  },
-  has(id) {
-    return mirror.map.hasOwnProperty(id);
-  },
-};
+  }
+
+  public has(id: number) {
+    return this.map.hasOwnProperty(id);
+  }
+}
+
+export const mirror = new Mirror() // default Mirror for recorder
 
 // copy from underscore and modified
 export function throttle<T>(

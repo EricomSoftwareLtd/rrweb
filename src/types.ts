@@ -209,7 +209,7 @@ export type inputValue = {
 
 export type inputCallback = (v: inputValue & { id: number }) => void;
 
-export type Mirror = {
+export type IMirror = {
   map: idNodeMap;
   getId: (n: INode) => number;
   getNode: (id: number) => INode | null;
