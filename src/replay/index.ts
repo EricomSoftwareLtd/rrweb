@@ -70,6 +70,7 @@ export class Replayer {
       loadTimeout: 0,
       skipInactive: false,
       showWarning: true,
+      showDebug: false,
     };
     this.config = Object.assign({}, defaultConfig, config);
 
@@ -447,7 +448,7 @@ export class Replayer {
         const event = new Event(MouseInteractions[d.type].toLowerCase());
         const target = this.mirror.getNode(d.id);
         if (!target) {
-          return this.warnNodeNotFound(d, d.id);
+          return this.debugNodeNotFound(d, d.id);
         }
         switch (d.type) {
           case MouseInteractions.Blur:
@@ -492,7 +493,7 @@ export class Replayer {
         }
         const target = this.mirror.getNode(d.id);
         if (!target) {
-          return this.warnNodeNotFound(d, d.id);
+          return this.debugNodeNotFound(d, d.id);
         }
         if ((target as Node) === this.iframe.contentDocument) {
           this.iframe.contentWindow!.scrollTo({
@@ -531,7 +532,7 @@ export class Replayer {
         }
         const target = this.mirror.getNode(d.id);
         if (!target) {
-          return this.warnNodeNotFound(d, d.id);
+          return this.debugNodeNotFound(d, d.id);
         }
         try {
           ((target as Node) as HTMLInputElement).checked = d.isChecked;
@@ -579,7 +580,7 @@ export class Replayer {
     this.mouse.style.top = `${y}px`;
     const target = this.mirror.getNode(id);
     if (!target) {
-      return this.warnNodeNotFound(d, id);
+      return this.debugNodeNotFound(d, id);
     }
     this.hoverElements((target as Node) as Element);
   }
@@ -622,5 +623,19 @@ export class Replayer {
       return;
     }
     console.warn(REPLAY_CONSOLE_PREFIX, `Node with id '${id}' not found in`, d);
+  }
+
+  private debugNodeNotFound(d: incrementalData, id: number) {
+    /**
+     * There maybe some valid scenes of node not being found.
+     * Because DOM events are macrotask and MutationObserver callback
+     * is microtask, so events fired on a removed DOM may emit
+     * snapshots in the reverse order.
+     */
+    if (!this.config.showDebug) {
+      return;
+    }
+    // tslint:disable-next-line: no-console
+    console.log(REPLAY_CONSOLE_PREFIX, `Node with id '${id}' not found in`, d);
   }
 }
