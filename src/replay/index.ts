@@ -411,7 +411,7 @@ export class Replayer {
           for (const attributeName in mutation.attributes) {
             if (typeof attributeName === 'string') {
               const value = mutation.attributes[attributeName];
-              if (value) {
+              if (null != value) {
                 ((target as Node) as Element).setAttribute(
                   attributeName,
                   value,
