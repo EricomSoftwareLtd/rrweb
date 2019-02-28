@@ -338,6 +338,13 @@ function initInputObserver(cb: inputCallback): listenerHandler {
     if (type === 'radio' || type === 'checkbox') {
       isChecked = (target as HTMLInputElement).checked;
     }
+
+    try {
+      if (target === target.ownerDocument.activeElement) {
+        return;
+      }
+    } catch (e) {}
+
     cbWithDedup(target, { text, isChecked });
     // if a radio was checked
     // the other radios with the same name attribute will be unchecked.
