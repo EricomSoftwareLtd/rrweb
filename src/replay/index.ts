@@ -170,7 +170,7 @@ export class Replayer {
 
     this.iframe = document.createElement('iframe');
     this.iframe.setAttribute('sandbox', 'allow-same-origin');
-    this.iframe.setAttribute('scrolling', 'no');
+    // this.iframe.setAttribute('scrolling', 'no');
     this.wrapper.appendChild(this.iframe);
   }
 

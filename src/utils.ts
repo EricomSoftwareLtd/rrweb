@@ -48,7 +48,7 @@ export class Mirror implements IMirror {
 }
 
 export const mirror = new Mirror() // default Mirror for recorder
-
+window.rrwebMirror = mirror; // TODO SHIELD maybe shouldn't but it on window
 // copy from underscore and modified
 export function throttle<T>(
   func: (arg: T) => void,
